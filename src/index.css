@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .font-dotmatrix {
+    font-family: 'Space Mono', 'Courier Prime', 'VT323', monospace;
+  }
+
+  /* Dot Matrix & Typography Presets */
+  .font-draft {
+    font-family: 'VT323', 'Space Mono', 'Courier Prime', monospace;
+    letter-spacing: -0.2px;
+  }
+  .font-roman {
+    font-family: 'Courier Prime', 'Courier New', Courier, monospace;
+    letter-spacing: 0px;
+  }
+  .font-roman-condensed {
+    font-family: 'Share Tech Mono', 'Courier Prime', 'Space Mono', monospace;
+    letter-spacing: -0.8px;
+    transform-origin: left top;
+  }
+  .font-sans-serif {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+  .font-arial {
+    font-family: Arial, Helvetica, 'Liberation Sans', sans-serif;
+  }
+  .font-times-new-roman {
+    font-family: 'Times New Roman', Times, 'Liberation Serif', serif;
+  }
+}
+
+/* Advanced Enterprise Print CSS Rules (PRD Section 28 & Senior Web Architecture) */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  /* Reset layout constraints for print */
+  html, body {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 10pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide everything except the print active area */
+  header, nav, aside, .no-print, button, [role="dialog"] > div:first-child {
+    display: none !important;
+  }
+
+  /* Hide backdrop modal dark layers */
+  .fixed.inset-0 {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  .shadow-2xl, .shadow-xl, .shadow-md, .shadow-sm, .shadow-xs {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .max-h-\[96vh\], .overflow-y-auto, .overflow-hidden {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Automatic Clean Pagination Rules */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+  }
+
+  thead {
+    display: table-header-group !important; /* Repeats table header across multiple pages */
+  }
+
+  tfoot {
+    display: table-footer-group !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important; /* Prevents rows from splitting mid-text */
+    break-inside: avoid !important;
+  }
+
+  .avoid-break, .signature-block, .totals-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .page-break-always {
+    page-break-before: always !important;
+    break-before: always !important;
+  }
+
+  /* Compact Print Mode (Fits 13-20+ items cleanly into 1 A4 Page) */
+  .print-compact table th,
+  .print-compact table td {
+    padding: 3px 6px !important;
+    font-size: 8.5pt !important;
+    line-height: 1.15 !important;
+  }
+  .print-compact .doc-header {
+    padding-bottom: 6px !important;
+    margin-bottom: 6px !important;
+  }
+  .print-compact .doc-info-box {
+    padding: 6px 10px !important;
+    margin-bottom: 8px !important;
+    font-size: 8.5pt !important;
+  }
+  .print-compact .doc-totals {
+    margin-top: 6px !important;
+    padding-top: 6px !important;
+    font-size: 8.5pt !important;
+  }
+  .print-compact .doc-signatures {
+    margin-top: 8px !important;
+    padding-top: 4px !important;
+  }
+  .print-compact .sig-space {
+    height: 38px !important;
+  }
+
+  /* Specific page orientation and sizing for dot matrix continuous form */
+  .dotmatrix-print-page,
+  .dotmatrix-page {
+    width: 210mm !important;
+    height: 80mm !important;
+    max-height: 80mm !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    margin: 0 !important;
+    padding: 3mm 5mm !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    background: white !important;
+  }
+  .dotmatrix-print-page:last-child,
+  .dotmatrix-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* Standard A4 page */
+  .a4-print-page {
+    width: 100% !important;
+    max-width: 210mm !important;
+    min-height: auto !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    background: white !important;
+  }
+}
+
+/* Continuous Form Tractor-Feed Pin Holes Styling */
+.tractor-feed-edge {
+  background-image: radial-gradient(circle, #cbd5e1 3px, transparent 3.5px);
+  background-size: 16px 12px;
+  background-repeat: repeat-y;
+}

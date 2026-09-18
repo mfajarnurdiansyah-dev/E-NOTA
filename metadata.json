@@ -1,0 +1,6 @@
+{
+  "name": "Aplikasi Manajemen Invoice & Surat Jalan",
+  "description": "Sistem manajemen Invoice & Surat Jalan multi-company, configuration-driven dengan dukungan cetak A4 dan dot matrix 210x80mm, template builder, serta RBAC.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
