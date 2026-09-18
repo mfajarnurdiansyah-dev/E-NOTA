@@ -1,0 +1,193 @@
+{
+  "entities": {
+    "Company": {
+      "title": "Company",
+      "description": "Company branch profile and information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "company_code": { "type": "string", "maxLength": 50 },
+        "company_name": { "type": "string", "maxLength": 200 },
+        "address": { "type": "string", "maxLength": 500 },
+        "city": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 150 },
+        "website": { "type": "string", "maxLength": 150 },
+        "NIB": { "type": "string", "maxLength": 100 },
+        "bank_name": { "type": "string", "maxLength": 100 },
+        "bank_account": { "type": "string", "maxLength": 100 },
+        "account_name": { "type": "string", "maxLength": 150 },
+        "invoice_prefix": { "type": "string", "maxLength": 50 },
+        "delivery_order_prefix": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "created_at": { "type": "string", "maxLength": 50 },
+        "updated_at": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "company_code", "company_name"]
+    },
+    "User": {
+      "title": "User",
+      "description": "System user accounts for staff and administrators",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 150 },
+        "email": { "type": "string", "maxLength": 150 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "role_id": { "type": "string", "maxLength": 128 },
+        "role_name": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "created_at": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "name", "email", "role_id"]
+    },
+    "Role": {
+      "title": "Role",
+      "description": "User roles and permissions definitions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "code": { "type": "string", "maxLength": 50 },
+        "description": { "type": "string", "maxLength": 255 },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "created_at": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "name"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer contact and business profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "company_id": { "type": "string", "maxLength": 128 },
+        "customer_code": { "type": "string", "maxLength": 50 },
+        "customer_name": { "type": "string", "maxLength": 200 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 150 },
+        "address": { "type": "string", "maxLength": 500 },
+        "city": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "created_at": { "type": "string", "maxLength": 50 },
+        "updated_at": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "company_id", "customer_name"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Product catalog and pricing",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "company_id": { "type": "string", "maxLength": 128 },
+        "product_code": { "type": "string", "maxLength": 50 },
+        "product_name": { "type": "string", "maxLength": 200 },
+        "category": { "type": "string", "maxLength": 100 },
+        "unit": { "type": "string", "maxLength": 50 },
+        "purchase_price": { "type": "number" },
+        "selling_price": { "type": "number" },
+        "active": { "type": "boolean" },
+        "created_at": { "type": "string", "maxLength": 50 },
+        "updated_at": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "company_id", "product_name", "product_code"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Sales invoice and billing transaction",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "invoice_number": { "type": "string", "maxLength": 100 },
+        "company_id": { "type": "string", "maxLength": 128 },
+        "customer_id": { "type": "string", "maxLength": 128 },
+        "invoice_date": { "type": "string", "maxLength": 50 },
+        "due_date": { "type": "string", "maxLength": 50 },
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "discount_type": { "type": "string", "enum": ["nominal", "percent"] },
+        "discount_amount": { "type": "number" },
+        "dpp": { "type": "number" },
+        "tax_rate": { "type": "number" },
+        "tax_amount": { "type": "number" },
+        "grand_total": { "type": "number" },
+        "paid_amount": { "type": "number" },
+        "status": { "type": "string", "maxLength": 50 },
+        "created_by": { "type": "string", "maxLength": 128 },
+        "created_at": { "type": "string", "maxLength": 50 },
+        "updated_at": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "invoice_number", "company_id", "customer_id", "grand_total"]
+    },
+    "DeliveryOrder": {
+      "title": "DeliveryOrder",
+      "description": "Delivery order or Surat Jalan document",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "do_number": { "type": "string", "maxLength": 100 },
+        "company_id": { "type": "string", "maxLength": 128 },
+        "customer_id": { "type": "string", "maxLength": 128 },
+        "delivery_date": { "type": "string", "maxLength": 50 },
+        "driver_name": { "type": "string", "maxLength": 150 },
+        "vehicle_number": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "maxLength": 50 },
+        "created_by": { "type": "string", "maxLength": 128 },
+        "created_at": { "type": "string", "maxLength": 50 },
+        "updated_at": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "do_number", "company_id", "customer_id"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Invoice payment record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "invoice_id": { "type": "string", "maxLength": 128 },
+        "company_id": { "type": "string", "maxLength": 128 },
+        "customer_id": { "type": "string", "maxLength": 128 },
+        "payment_date": { "type": "string", "maxLength": 50 },
+        "amount": { "type": "number" },
+        "payment_method": { "type": "string", "maxLength": 50 },
+        "created_at": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "invoice_id", "company_id", "amount"]
+    }
+  },
+  "firestore": {
+    "/companies/{companyId}": {
+      "schema": "Company",
+      "description": "Company branch profiles"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "System user profiles"
+    },
+    "/roles/{roleId}": {
+      "schema": "Role",
+      "description": "Roles and permissions"
+    },
+    "/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Customer contacts"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Product catalog items"
+    },
+    "/invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "Customer invoices"
+    },
+    "/delivery_orders/{doId}": {
+      "schema": "DeliveryOrder",
+      "description": "Delivery orders (Surat Jalan)"
+    },
+    "/payments/{paymentId}": {
+      "schema": "Payment",
+      "description": "Invoice payment transactions"
+    }
+  }
+}

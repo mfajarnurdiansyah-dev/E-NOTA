@@ -1,9 +1,48 @@
 import React, { useState } from 'react';
-import { Database, Copy, Check, Download, Server, Shield, Layers } from 'lucide-react';
+import { Database, Copy, Check, Download, Server, Shield, Layers, Cloud, RefreshCw, CheckCircle2, Monitor } from 'lucide-react';
 import { POSTGRES_SCHEMA_SQL } from '../../services/migration.service';
+import { FirestoreService } from '../../services/firestore.service';
+import { StorageService } from '../../services/storage.service';
 
 export const DatabaseSchemaView: React.FC = () => {
   const [copied, setCopied] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncSuccess, setSyncSuccess] = useState(false);
+
+  const handleSyncToCloud = async () => {
+    setSyncing(true);
+    setSyncSuccess(false);
+    try {
+      const companies = StorageService.getCompanies();
+      const users = StorageService.getUsers();
+      const roles = StorageService.getRoles();
+      const customers = StorageService.getCustomers();
+      const products = StorageService.getProducts();
+      const invoices = StorageService.getInvoices();
+      const deliveryOrders = StorageService.getDeliveryOrders();
+      const numberingRules = StorageService.getNumberingRules();
+      const templates = StorageService.getTemplates();
+
+      // Push all to Firestore in parallel batches
+      await Promise.all([
+        ...companies.map((c) => FirestoreService.saveCompany(c)),
+        ...users.map((u) => FirestoreService.saveUser(u)),
+        ...roles.map((r) => FirestoreService.saveRole(r)),
+        ...customers.map((c) => FirestoreService.saveCustomer(c)),
+        ...products.map((p) => FirestoreService.saveProduct(p)),
+        ...invoices.map((inv) => FirestoreService.saveInvoice(inv)),
+        ...deliveryOrders.map((d) => FirestoreService.saveDeliveryOrder(d)),
+        ...numberingRules.map((nr) => FirestoreService.saveNumberingRule(nr)),
+      ]);
+
+      setSyncSuccess(true);
+      setTimeout(() => setSyncSuccess(false), 4000);
+    } catch (err) {
+      console.error('Manual sync failed:', err);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(POSTGRES_SCHEMA_SQL);
@@ -48,6 +87,40 @@ export const DatabaseSchemaView: React.FC = () => {
             <Download className="w-4 h-4" />
             <span>Unduh File .sql</span>
           </button>
+        </div>
+      </div>
+
+      {/* Cloud Database (Firebase Firestore) Real-time Sync Status Card */}
+      <div className="bg-linear-to-r from-emerald-50 via-teal-50 to-sky-50 border border-emerald-200 rounded-2xl p-4 sm:p-5 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Cloud className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-900">Database Cloud Aktif (Firebase Firestore)</h3>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                  Multi-Device Sync Online
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
+                Data faktur, surat jalan, produk, pelanggan, dan pembayaran tersimpan di database cloud Google Cloud Firestore. Anda dapat membuka URL Vercel aplikasi ini dari <strong>berbagai komputer dan smartphone yang berbeda</strong>, dan seluruh data akan selalu tersinkronisasi secara otomatis dan real-time.
+              </p>
+            </div>
+          </div>
+
+          <div className="shrink-0 w-full sm:w-auto">
+            <button
+              onClick={handleSyncToCloud}
+              disabled={syncing}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs transition cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
+              <span>{syncing ? 'Sedang Menyinkronkan...' : syncSuccess ? 'Berhasil Disinkronkan!' : 'Sinkronkan Ulang ke Cloud'}</span>
+            </button>
+          </div>
         </div>
       </div>
 

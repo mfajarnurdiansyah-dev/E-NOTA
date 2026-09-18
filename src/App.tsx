@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StorageService } from './services/storage.service';
+import { FirestoreService } from './services/firestore.service';
+import { testFirestoreConnection } from './services/firebase';
 import { 
   Company, 
   Invoice, 
@@ -110,6 +112,101 @@ export default function App() {
   const [printDocument, setPrintDocument] = useState<Invoice | DeliveryOrder | null>(null);
   const [printType, setPrintType] = useState<'invoice' | 'delivery_order'>('invoice');
 
+  // Realtime Cloud Database (Firebase Firestore) Sync across all computers
+  useEffect(() => {
+    // 1. Check connection
+    testFirestoreConnection();
+
+    // 2. If Cloud Database is empty on first setup, seed initial data
+    FirestoreService.seedFirestoreIfEmpty({
+      companies,
+      users,
+      roles,
+      customers,
+      products,
+      invoices,
+      deliveryOrders,
+      numberingRules,
+      templates,
+    });
+
+    // 3. Real-time Subscriptions - automatically keeps state updated across all devices
+    const unsubInvoices = FirestoreService.subscribeInvoices((cloudInvoices) => {
+      if (cloudInvoices && cloudInvoices.length > 0) {
+        setInvoices(cloudInvoices);
+        StorageService.saveInvoices(cloudInvoices);
+      }
+    });
+
+    const unsubDOs = FirestoreService.subscribeDeliveryOrders((cloudDOs) => {
+      if (cloudDOs && cloudDOs.length > 0) {
+        setDeliveryOrders(cloudDOs);
+        StorageService.saveDeliveryOrders(cloudDOs);
+      }
+    });
+
+    const unsubCustomers = FirestoreService.subscribeCustomers((cloudCusts) => {
+      if (cloudCusts && cloudCusts.length > 0) {
+        setCustomers(cloudCusts);
+        StorageService.saveCustomers(cloudCusts);
+      }
+    });
+
+    const unsubProducts = FirestoreService.subscribeProducts((cloudProducts) => {
+      if (cloudProducts && cloudProducts.length > 0) {
+        setProducts(cloudProducts);
+        StorageService.saveProducts(cloudProducts);
+      }
+    });
+
+    const unsubCompanies = FirestoreService.subscribeCompanies((cloudCompanies) => {
+      if (cloudCompanies && cloudCompanies.length > 0) {
+        setCompanies(cloudCompanies);
+        StorageService.saveCompanies(cloudCompanies);
+      }
+    });
+
+    const unsubUsers = FirestoreService.subscribeUsers((cloudUsers) => {
+      if (cloudUsers && cloudUsers.length > 0) {
+        setUsers(cloudUsers);
+        StorageService.saveUsers(cloudUsers);
+      }
+    });
+
+    const unsubRoles = FirestoreService.subscribeRoles((cloudRoles) => {
+      if (cloudRoles && cloudRoles.length > 0) {
+        setRoles(cloudRoles);
+        StorageService.saveRoles(cloudRoles);
+      }
+    });
+
+    const unsubPayments = FirestoreService.subscribePayments((cloudPayments) => {
+      if (cloudPayments && cloudPayments.length > 0) {
+        setPayments(cloudPayments);
+        StorageService.savePayments(cloudPayments);
+      }
+    });
+
+    const unsubRules = FirestoreService.subscribeNumberingRules((cloudRules) => {
+      if (cloudRules && cloudRules.length > 0) {
+        setNumberingRules(cloudRules);
+        StorageService.saveNumberingRules(cloudRules);
+      }
+    });
+
+    return () => {
+      unsubInvoices();
+      unsubDOs();
+      unsubCustomers();
+      unsubProducts();
+      unsubCompanies();
+      unsubUsers();
+      unsubRoles();
+      unsubPayments();
+      unsubRules();
+    };
+  }, []);
+
   // Derived active objects
   const activeCompany =
     companies.find((c) => c.id === activeCompanyId) || companies[0];
@@ -181,10 +278,12 @@ export default function App() {
       const nextRoles = [...roles, newRole];
       setRoles(nextRoles);
       StorageService.saveRoles(nextRoles);
+      FirestoreService.saveRole(newRole);
     }
     const nextUsers = [...users, newUser];
     setUsers(nextUsers);
     StorageService.saveUsers(nextUsers);
+    FirestoreService.saveUser(newUser);
 
     handleLogin(newUser);
   };
@@ -198,12 +297,14 @@ export default function App() {
     const nextUsers = [...users, newUser];
     setUsers(nextUsers);
     StorageService.saveUsers(nextUsers);
+    FirestoreService.saveUser(newUser);
   };
 
   const handleAddRoleInsideApp = (newRole: Role) => {
     const nextRoles = [...roles, newRole];
     setRoles(nextRoles);
     StorageService.saveRoles(nextRoles);
+    FirestoreService.saveRole(newRole);
   };
 
   const handleDeleteUser = (userId: string) => {
@@ -213,6 +314,7 @@ export default function App() {
     const nextUsers = users.filter((u) => u.id !== userId);
     setUsers(nextUsers);
     StorageService.saveUsers(nextUsers);
+    FirestoreService.deleteUser(userId);
 
     // If the active user deletes their own account, log out to the auth gate
     if (currentUserId === userId) {
@@ -223,11 +325,11 @@ export default function App() {
   // ==================== INVOICE HANDLERS ====================
   const handleSaveInvoice = (invoiceData: Partial<Invoice>, advanceSequence: boolean) => {
     let updatedInvoices: Invoice[];
+    let targetInv: Invoice;
     if (editingInvoice) {
+      targetInv = { ...editingInvoice, ...invoiceData, updated_at: new Date().toISOString() } as Invoice;
       updatedInvoices = invoices.map((inv) =>
-        inv.id === editingInvoice.id
-          ? ({ ...inv, ...invoiceData, updated_at: new Date().toISOString() } as Invoice)
-          : inv
+        inv.id === editingInvoice.id ? targetInv : inv
       );
     } else {
       const newInv: Invoice = {
@@ -236,6 +338,7 @@ export default function App() {
         updated_at: new Date().toISOString(),
         ...invoiceData,
       } as Invoice;
+      targetInv = newInv;
       updatedInvoices = [newInv, ...invoices];
 
       if (advanceSequence) {
@@ -252,12 +355,15 @@ export default function App() {
           );
           setNumberingRules(updatedRules);
           StorageService.saveNumberingRules(updatedRules);
+          const changedRule = updatedRules.find((r) => r.id === invRule.id);
+          if (changedRule) FirestoreService.saveNumberingRule(changedRule);
         }
       }
     }
 
     setInvoices(updatedInvoices);
     StorageService.saveInvoices(updatedInvoices);
+    FirestoreService.saveInvoice(targetInv);
     setIsInvoiceModalOpen(false);
     setEditingInvoice(null);
   };
@@ -267,6 +373,7 @@ export default function App() {
       const updated = invoices.filter((i) => i.id !== id);
       setInvoices(updated);
       StorageService.saveInvoices(updated);
+      FirestoreService.deleteInvoice(id);
     }
   };
 
@@ -285,6 +392,7 @@ export default function App() {
     const updated = [newInv, ...invoices];
     setInvoices(updated);
     StorageService.saveInvoices(updated);
+    FirestoreService.saveInvoice(newInv);
   };
 
   const handleUpdateInvoiceStatus = (id: string, newStatus: DocumentStatus) => {
@@ -293,6 +401,8 @@ export default function App() {
     );
     setInvoices(updated);
     StorageService.saveInvoices(updated);
+    const changed = updated.find((i) => i.id === id);
+    if (changed) FirestoreService.saveInvoice(changed);
   };
 
   // Payment Recording
@@ -324,6 +434,7 @@ export default function App() {
     const newPayments = [newPayment, ...payments];
     setPayments(newPayments);
     StorageService.savePayments(newPayments);
+    FirestoreService.savePayment(newPayment);
 
     // Update Invoice paid_amount and status
     const newPaidAmount = paymentTargetInvoice.paid_amount + paymentData.amount;
@@ -343,6 +454,9 @@ export default function App() {
 
     setInvoices(updatedInvoices);
     StorageService.saveInvoices(updatedInvoices);
+    const updatedInv = updatedInvoices.find((inv) => inv.id === paymentTargetInvoice.id);
+    if (updatedInv) FirestoreService.saveInvoice(updatedInv);
+
     setIsPaymentModalOpen(false);
     setPaymentTargetInvoice(null);
   };
@@ -357,11 +471,11 @@ export default function App() {
   // ==================== DELIVERY ORDER HANDLERS ====================
   const handleSaveDO = (doData: Partial<DeliveryOrder>, advanceSequence: boolean) => {
     let updatedDOs: DeliveryOrder[];
+    let targetDO: DeliveryOrder;
     if (editingDO) {
+      targetDO = { ...editingDO, ...doData, updated_at: new Date().toISOString() } as DeliveryOrder;
       updatedDOs = deliveryOrders.map((d) =>
-        d.id === editingDO.id
-          ? ({ ...d, ...doData, updated_at: new Date().toISOString() } as DeliveryOrder)
-          : d
+        d.id === editingDO.id ? targetDO : d
       );
     } else {
       const newDO: DeliveryOrder = {
@@ -370,6 +484,7 @@ export default function App() {
         updated_at: new Date().toISOString(),
         ...doData,
       } as DeliveryOrder;
+      targetDO = newDO;
       updatedDOs = [newDO, ...deliveryOrders];
 
       if (advanceSequence) {
@@ -386,12 +501,15 @@ export default function App() {
           );
           setNumberingRules(updatedRules);
           StorageService.saveNumberingRules(updatedRules);
+          const changedRule = updatedRules.find((r) => r.id === doRule.id);
+          if (changedRule) FirestoreService.saveNumberingRule(changedRule);
         }
       }
     }
 
     setDeliveryOrders(updatedDOs);
     StorageService.saveDeliveryOrders(updatedDOs);
+    FirestoreService.saveDeliveryOrder(targetDO);
     setIsDOModalOpen(false);
     setEditingDO(null);
     setDoFromInvoice(null);
@@ -402,6 +520,7 @@ export default function App() {
       const updated = deliveryOrders.filter((d) => d.id !== id);
       setDeliveryOrders(updated);
       StorageService.saveDeliveryOrders(updated);
+      FirestoreService.deleteDeliveryOrder(id);
     }
   };
 
@@ -411,6 +530,8 @@ export default function App() {
     );
     setDeliveryOrders(updated);
     StorageService.saveDeliveryOrders(updated);
+    const changed = updated.find((d) => d.id === id);
+    if (changed) FirestoreService.saveDeliveryOrder(changed);
   };
 
   // Print Preview triggers
@@ -434,6 +555,7 @@ export default function App() {
       : [...companies, comp];
     setCompanies(updated);
     StorageService.saveCompanies(updated);
+    FirestoreService.saveCompany(comp);
   };
 
   // Customer management save
@@ -444,6 +566,7 @@ export default function App() {
       : [...customers, cust];
     setCustomers(updated);
     StorageService.saveCustomers(updated);
+    FirestoreService.saveCustomer(cust);
   };
 
   const handleDeleteCustomer = (id: string) => {
@@ -451,6 +574,7 @@ export default function App() {
       const updated = customers.filter((c) => c.id !== id);
       setCustomers(updated);
       StorageService.saveCustomers(updated);
+      FirestoreService.deleteCustomer(id);
     }
   };
 
@@ -462,6 +586,7 @@ export default function App() {
       : [...products, prod];
     setProducts(updated);
     StorageService.saveProducts(updated);
+    FirestoreService.saveProduct(prod);
   };
 
   const handleDeleteProduct = (id: string) => {
@@ -469,6 +594,7 @@ export default function App() {
       const updated = products.filter((p) => p.id !== id);
       setProducts(updated);
       StorageService.saveProducts(updated);
+      FirestoreService.deleteProduct(id);
     }
   };
 
@@ -477,6 +603,7 @@ export default function App() {
     const updated = numberingRules.map((r) => (r.id === rule.id ? rule : r));
     setNumberingRules(updated);
     StorageService.saveNumberingRules(updated);
+    FirestoreService.saveNumberingRule(rule);
   };
 
   // Template save
@@ -493,6 +620,8 @@ export default function App() {
     );
     setRoles(updated);
     StorageService.saveRoles(updated);
+    const changed = updated.find((r) => r.id === roleId);
+    if (changed) FirestoreService.saveRole(changed);
   };
 
   // System config updates
