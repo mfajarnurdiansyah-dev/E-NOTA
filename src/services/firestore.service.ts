@@ -35,6 +35,11 @@ export const FirestoreCollections = {
   TEMPLATES: 'templates',
 } as const;
 
+function cleanForFirestore(obj: any): any {
+  if (obj === null || obj === undefined) return null;
+  return JSON.parse(JSON.stringify(obj, (_, v) => (v === undefined ? null : v)));
+}
+
 export const FirestoreService = {
   // ==================== INVOICES ====================
   subscribeInvoices: (onUpdate: (invoices: Invoice[]) => void): Unsubscribe => {
@@ -52,7 +57,8 @@ export const FirestoreService = {
 
   saveInvoice: async (invoice: Invoice): Promise<void> => {
     try {
-      await setDoc(doc(db, FirestoreCollections.INVOICES, invoice.id), invoice);
+      const sanitized = cleanForFirestore(invoice);
+      await setDoc(doc(db, FirestoreCollections.INVOICES, invoice.id), sanitized);
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `${FirestoreCollections.INVOICES}/${invoice.id}`);
     }
@@ -82,7 +88,8 @@ export const FirestoreService = {
 
   saveDeliveryOrder: async (order: DeliveryOrder): Promise<void> => {
     try {
-      await setDoc(doc(db, FirestoreCollections.DELIVERY_ORDERS, order.id), order);
+      const sanitized = cleanForFirestore(order);
+      await setDoc(doc(db, FirestoreCollections.DELIVERY_ORDERS, order.id), sanitized);
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `${FirestoreCollections.DELIVERY_ORDERS}/${order.id}`);
     }

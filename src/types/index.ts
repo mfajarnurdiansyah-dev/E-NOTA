@@ -147,6 +147,10 @@ export interface Invoice {
   notes?: string;
   terms?: string;
   template_id: string;
+  warehouse_officer_name?: string;
+  warehouse_signature_image?: string;
+  signer_name?: string;
+  signature_image?: string;
   custom_fields?: Record<string, string | number>;
   created_by: string;
   created_at: string;
@@ -182,6 +186,9 @@ export interface DeliveryOrder {
   notes?: string;
   status: DeliveryStatus;
   template_id: string;
+  warehouse_officer_name?: string;
+  warehouse_signature_image?: string;
+  signature_image?: string;
   custom_fields?: Record<string, string | number>;
   created_by: string;
   created_at: string;

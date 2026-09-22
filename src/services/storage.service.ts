@@ -469,6 +469,8 @@ const INITIAL_INVOICES: Invoice[] = [
     notes: 'Terima kasih atas kerjasama Anda. Barang yang sudah dibeli telah dicek sesuai standar.',
     terms: 'Pembayaran transfer hanya sah jika ditujukan ke rekening resmi BRI an SPPG Sugih Babakan Karet.',
     template_id: 'tmpl-a4-formal',
+    warehouse_officer_name: 'Budi Santoso',
+    signer_name: 'H. Asep Sugiharto',
     custom_fields: {
       po_number: 'PO-MF-2026/09/88',
       kendaraan: 'F 8892 WY',
@@ -614,6 +616,7 @@ const INITIAL_DELIVERY_ORDERS: DeliveryOrder[] = [
       },
     ],
     notes: 'Harap periksa kondisi fisik dan timbang kembali saat penerimaan.',
+    warehouse_officer_name: 'Budi Santoso',
     status: 'DELIVERED',
     template_id: 'tmpl-do-dotmatrix',
     created_by: 'user-3',

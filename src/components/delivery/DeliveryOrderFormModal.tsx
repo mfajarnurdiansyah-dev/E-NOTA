@@ -10,6 +10,7 @@ import {
   NumberingRule 
 } from '../../types';
 import { generateDocumentNumber } from '../../services/numbering.service';
+import { DocumentSignatureSection } from '../common/DocumentSignatureSection';
 
 interface DeliveryOrderFormModalProps {
   initialData?: DeliveryOrder | null;
@@ -74,6 +75,17 @@ export const DeliveryOrderFormModal: React.FC<DeliveryOrderFormModalProps> = ({
   const [notes, setNotes] = useState<string>(
     initialData?.notes ||
       'Harap periksa kondisi fisik barang, segel karung/dus, dan timbang kembali saat penerimaan.'
+  );
+
+  // Signatures
+  const [warehouseOfficerName, setWarehouseOfficerName] = useState<string>(
+    initialData?.warehouse_officer_name || fromInvoice?.warehouse_officer_name || ''
+  );
+  const [warehouseSignatureImage, setWarehouseSignatureImage] = useState<string | undefined>(
+    initialData?.warehouse_signature_image || fromInvoice?.warehouse_signature_image || undefined
+  );
+  const [signatureImage, setSignatureImage] = useState<string | undefined>(
+    initialData?.signature_image || fromInvoice?.signature_image || undefined
   );
 
   // Initial items: If fromInvoice, populate with invoice items!
@@ -188,6 +200,9 @@ export const DeliveryOrderFormModal: React.FC<DeliveryOrderFormModalProps> = ({
       receiver_phone: receiverPhone,
       items,
       notes,
+      warehouse_officer_name: warehouseOfficerName.trim() || undefined,
+      warehouse_signature_image: warehouseSignatureImage || undefined,
+      signature_image: signatureImage || undefined,
       status: initialData?.status || status,
       template_id: initialData?.template_id || 'tmpl-do-dotmatrix',
     };
@@ -381,12 +396,15 @@ export const DeliveryOrderFormModal: React.FC<DeliveryOrderFormModalProps> = ({
                       <td className="p-2">
                         <input
                           type="number"
-                          min={1}
-                          value={it.quantity}
-                          onChange={(e) =>
-                            handleUpdateItem(idx, 'quantity', Number(e.target.value))
-                          }
-                          className="w-full p-1.5 border border-slate-300 rounded-md text-center font-mono font-bold"
+                          step="any"
+                          min="0"
+                          value={it.quantity === 0 ? '' : it.quantity}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            handleUpdateItem(idx, 'quantity', val === '' ? 0 : parseFloat(val) || 0);
+                          }}
+                          placeholder="0"
+                          className="w-full p-1.5 border border-slate-300 rounded-md text-center font-mono font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                         />
                       </td>
 
@@ -434,6 +452,18 @@ export const DeliveryOrderFormModal: React.FC<DeliveryOrderFormModalProps> = ({
               className="w-full p-2.5 border border-slate-300 rounded-xl"
             />
           </div>
+
+          {/* Section: Custom Signature Names & Image Uploads */}
+          <DocumentSignatureSection
+            warehouseOfficerName={warehouseOfficerName}
+            onWarehouseOfficerNameChange={setWarehouseOfficerName}
+            warehouseSignatureImage={warehouseSignatureImage}
+            onWarehouseSignatureImageChange={setWarehouseSignatureImage}
+            signatureImage={signatureImage}
+            onSignatureImageChange={setSignatureImage}
+            defaultSignerPlaceholder={company.company_name}
+            documentType="delivery_order"
+          />
         </div>
 
         <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between rounded-b-2xl">

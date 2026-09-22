@@ -1,7 +1,7 @@
 /**
  * Arithmetic & Currency Calculation Service
  * Conforms to PRD Section 12 & 32
- * Uses exact decimal math, avoids floating point drift
+ * Uses exact decimal math, avoids floating point drift for decimal quantities (e.g., 0.5, 2.5, 10.55)
  */
 
 export function calculateItemSubtotal(
@@ -10,14 +10,19 @@ export function calculateItemSubtotal(
   discount: number = 0,
   discount_type: 'nominal' | 'percent' = 'nominal'
 ): number {
-  const base = Math.round(quantity * price);
+  const q = Number(quantity) || 0;
+  const p = Number(price) || 0;
+
+  // Use fixed-precision intermediate step to eliminate binary floating point drift (e.g. 2.55 * 10000)
+  const rawBase = Math.round((q * p) * 10000) / 10000;
+  const base = Math.round(rawBase);
   if (discount <= 0) return base;
   
   let discAmount = 0;
   if (discount_type === 'percent') {
-    discAmount = Math.round((base * discount) / 100);
+    discAmount = Math.round((base * (Number(discount) || 0)) / 100);
   } else {
-    discAmount = Math.round(discount);
+    discAmount = Math.round(Number(discount) || 0);
   }
   return Math.max(0, base - discAmount);
 }
@@ -81,9 +86,25 @@ export function formatRupiah(amount: number): string {
   }).format(amount);
 }
 
-export function formatNumber(num: number): string {
-  if (isNaN(num)) return '0';
-  return new Intl.NumberFormat('id-ID').format(num);
+export function formatNumber(num: number, maxDecimals: number = 2): string {
+  if (isNaN(num) || num === null || num === undefined) return '0';
+  return new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxDecimals,
+  }).format(num);
+}
+
+/**
+ * Format quantity with support for decimals (e.g. 0.5, 2.5, 10.55, 100)
+ * Uses standard Indonesian punctuation (dot for thousands, comma for decimals)
+ * Trims unnecessary trailing zeroes (e.g. 2 instead of 2,00)
+ */
+export function formatQuantity(num: number, maxDecimals: number = 4): string {
+  if (isNaN(num) || num === null || num === undefined) return '0';
+  return new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxDecimals,
+  }).format(num);
 }
 
 export function formatDateIndo(dateStr: string): string {

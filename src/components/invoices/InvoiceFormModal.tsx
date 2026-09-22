@@ -26,6 +26,7 @@ import {
   terbilang 
 } from '../../services/calculation.service';
 import { generateDocumentNumber } from '../../services/numbering.service';
+import { DocumentSignatureSection } from '../common/DocumentSignatureSection';
 
 interface InvoiceFormModalProps {
   initialData?: Invoice | null;
@@ -109,6 +110,20 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     (initialData?.custom_fields?.kendaraan as string) || ''
   );
 
+  // Signatures & Signer custom names
+  const [warehouseOfficerName, setWarehouseOfficerName] = useState<string>(
+    initialData?.warehouse_officer_name || ''
+  );
+  const [warehouseSignatureImage, setWarehouseSignatureImage] = useState<string | undefined>(
+    initialData?.warehouse_signature_image || undefined
+  );
+  const [signerName, setSignerName] = useState<string>(
+    initialData?.signer_name || ''
+  );
+  const [signatureImage, setSignatureImage] = useState<string | undefined>(
+    initialData?.signature_image || undefined
+  );
+
   // Recalculate totals
   const totals = calculateInvoiceTotals(items, discount, discountType, taxRate);
 
@@ -148,7 +163,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     const newItems = [...items];
     const current = newItems[index];
     const sub = calculateItemSubtotal(
-      current.quantity,
+      Number(current.quantity) || 0,
       prod.selling_price,
       current.discount,
       current.discount_type
@@ -172,9 +187,9 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     const newItems = [...items];
     const item = { ...newItems[index], [field]: value };
     item.subtotal = calculateItemSubtotal(
-      item.quantity,
-      item.price,
-      item.discount,
+      Number(item.quantity) || 0,
+      Number(item.price) || 0,
+      Number(item.discount) || 0,
       item.discount_type
     );
     newItems[index] = item;
@@ -210,6 +225,10 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
       status: initialData?.status || status,
       notes,
       template_id: initialData?.template_id || 'tmpl-a4-formal',
+      warehouse_officer_name: warehouseOfficerName.trim() || undefined,
+      warehouse_signature_image: warehouseSignatureImage || undefined,
+      signer_name: signerName.trim() || undefined,
+      signature_image: signatureImage || undefined,
       custom_fields: {
         po_number: poNumber,
         kendaraan,
@@ -375,12 +394,15 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                       <td className="p-2">
                         <input
                           type="number"
-                          min={1}
-                          value={item.quantity}
-                          onChange={(e) =>
-                            handleUpdateItem(idx, 'quantity', Number(e.target.value))
-                          }
-                          className="w-full p-1.5 border border-slate-300 rounded-md text-center font-bold font-mono"
+                          step="any"
+                          min="0"
+                          value={item.quantity === 0 ? '' : item.quantity}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            handleUpdateItem(idx, 'quantity', val === '' ? 0 : parseFloat(val) || 0);
+                          }}
+                          placeholder="0"
+                          className="w-full p-1.5 border border-slate-300 rounded-md text-center font-bold font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                         />
                       </td>
 
@@ -525,6 +547,20 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Section: Custom Signature Names & Image Uploads */}
+          <DocumentSignatureSection
+            warehouseOfficerName={warehouseOfficerName}
+            onWarehouseOfficerNameChange={setWarehouseOfficerName}
+            warehouseSignatureImage={warehouseSignatureImage}
+            onWarehouseSignatureImageChange={setWarehouseSignatureImage}
+            signerName={signerName}
+            onSignerNameChange={setSignerName}
+            signatureImage={signatureImage}
+            onSignatureImageChange={setSignatureImage}
+            defaultSignerPlaceholder={company.account_name || company.company_name}
+            documentType="invoice"
+          />
         </div>
 
         {/* Modal Actions Footer */}

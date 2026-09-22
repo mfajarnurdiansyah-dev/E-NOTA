@@ -23,7 +23,7 @@ import {
   DocumentTemplate, 
   PrinterProfile 
 } from '../../types';
-import { formatRupiah, formatNumber, formatDateIndo, terbilang } from '../../services/calculation.service';
+import { formatRupiah, formatNumber, formatQuantity, formatDateIndo, terbilang } from '../../services/calculation.service';
 import { exportElementToPdf } from '../../services/pdf.service';
 
 export type PrintFontFamily = 
@@ -356,6 +356,27 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
       stampColor: 'text-amber-600 border-amber-300',
     },
   };
+
+  // Signatures & Signer custom names
+  const warehouseOfficerName =
+    documentType === 'invoice'
+      ? invoice?.warehouse_officer_name
+      : deliveryOrder?.warehouse_officer_name || deliveryOrder?.driver_name;
+
+  const warehouseSignature =
+    documentType === 'invoice'
+      ? invoice?.warehouse_signature_image
+      : deliveryOrder?.warehouse_signature_image;
+
+  const issuerName =
+    documentType === 'invoice'
+      ? invoice?.signer_name || company.account_name || company.company_name
+      : company.company_name;
+
+  const issuerSignature =
+    documentType === 'invoice'
+      ? invoice?.signature_image
+      : deliveryOrder?.signature_image;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
@@ -776,7 +797,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                               isCompactMode ? 'px-2 py-1 text-[10px]' : 'px-3 py-2'
                             } text-center font-bold`}
                           >
-                            {formatNumber(it.quantity)}
+                            {formatQuantity(it.quantity)}
                           </td>
                           <td
                             className={`border border-slate-300 ${
@@ -835,7 +856,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                               isCompactMode ? 'px-2 py-1 text-[10px]' : 'px-3 py-2'
                             } text-center font-bold`}
                           >
-                            {formatNumber(it.quantity)}
+                            {formatQuantity(it.quantity)}
                           </td>
                           <td
                             className={`border border-slate-300 ${
@@ -958,41 +979,68 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                     <p className="text-slate-500 font-medium text-[10px]">Penerima / Customer</p>
                     <div
                       className={`sig-space ${
-                        isCompactMode ? 'h-9' : 'h-16'
-                      } flex items-end justify-center`}
+                        isCompactMode ? 'h-11' : 'h-16'
+                      } flex flex-col items-center justify-end`}
                     >
+                      <div className={`${isCompactMode ? 'h-7' : 'h-12'}`} />
                       <div className="w-32 border-b border-dashed border-slate-400"></div>
                     </div>
-                    <p className="text-[10px] text-slate-700 font-semibold mt-1">
-                      ( {customer?.customer_name?.slice(0, 20) || '...........................'} )
+                    <p className="text-[10px] text-slate-700 font-semibold mt-1 truncate px-1">
+                      ( {customer?.customer_name?.slice(0, 22) || '...........................'} )
                     </p>
                   </div>
+
                   <div>
                     <p className="text-slate-500 font-medium text-[10px]">
-                      {documentType === 'delivery_order' ? 'Sopir / Ekspedisi' : 'Bagian Gudang'}
+                      {documentType === 'delivery_order'
+                        ? (deliveryOrder?.warehouse_officer_name ? 'Bagian Gudang' : 'Sopir / Ekspedisi')
+                        : 'Bagian Gudang'}
                     </p>
                     <div
                       className={`sig-space ${
-                        isCompactMode ? 'h-9' : 'h-16'
-                      } flex items-end justify-center`}
+                        isCompactMode ? 'h-11' : 'h-16'
+                      } flex flex-col items-center justify-end relative`}
                     >
+                      {warehouseSignature ? (
+                        <img
+                          src={warehouseSignature}
+                          alt="Tanda Tangan Bagian Gudang"
+                          className={`${
+                            isCompactMode ? 'max-h-8 max-w-28' : 'max-h-14 max-w-32'
+                          } object-contain mb-0.5 select-none pointer-events-none`}
+                        />
+                      ) : (
+                        <div className={`${isCompactMode ? 'h-7' : 'h-12'}`} />
+                      )}
                       <div className="w-32 border-b border-dashed border-slate-400"></div>
                     </div>
-                    <p className="text-[10px] text-slate-700 font-semibold mt-1">
-                      ( {deliveryOrder?.driver_name || '...........................'} )
+                    <p className="text-[10px] text-slate-700 font-semibold mt-1 truncate px-1">
+                      ( {warehouseOfficerName || '...........................'} )
                     </p>
                   </div>
+
                   <div>
                     <p className="text-slate-500 font-medium text-[10px]">Hormat Kami,</p>
                     <div
                       className={`sig-space ${
-                        isCompactMode ? 'h-9' : 'h-16'
-                      } flex items-end justify-center`}
+                        isCompactMode ? 'h-11' : 'h-16'
+                      } flex flex-col items-center justify-end relative`}
                     >
+                      {issuerSignature ? (
+                        <img
+                          src={issuerSignature}
+                          alt="Tanda Tangan Hormat Kami"
+                          className={`${
+                            isCompactMode ? 'max-h-8 max-w-28' : 'max-h-14 max-w-32'
+                          } object-contain mb-0.5 select-none pointer-events-none`}
+                        />
+                      ) : (
+                        <div className={`${isCompactMode ? 'h-7' : 'h-12'}`} />
+                      )}
                       <div className="w-32 border-b border-dashed border-slate-400"></div>
                     </div>
-                    <p className="text-[10px] text-slate-700 font-semibold mt-1">
-                      ( {company.account_name || company.company_name} )
+                    <p className="text-[10px] text-slate-700 font-semibold mt-1 truncate px-1">
+                      ( {issuerName} )
                     </p>
                   </div>
                 </div>
@@ -1079,7 +1127,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                           <div className="flex border-b border-slate-800 font-bold text-[8.5px] pb-0.5">
                             <div className="w-6 text-center">NO</div>
                             <div className="flex-1">NAMA BARANG</div>
-                            <div className="w-12 text-center">QTY</div>
+                            <div className="w-14 text-center">QTY</div>
                             <div className="w-10 text-center">SAT</div>
                             {documentType === 'invoice' && (
                               <>
@@ -1102,8 +1150,8 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                                   <div className="flex-1 truncate font-semibold">
                                     {it.description?.slice(0, 38)}
                                   </div>
-                                  <div className="w-12 text-center font-bold font-mono">
-                                    {formatNumber(it.quantity)}
+                                  <div className="w-14 text-center font-bold font-mono">
+                                    {formatQuantity(it.quantity)}
                                   </div>
                                   <div className="w-10 text-center">{it.unit}</div>
                                   {documentType === 'invoice' && (
@@ -1178,18 +1226,40 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                           <div className="grid grid-cols-3 text-center text-[8px] pt-1 mt-0.5 border-t border-dotted border-slate-400">
                             <div>
                               Penerima Barang,
-                              <div className="h-5"></div>
+                              <div className="h-5 flex items-center justify-center"></div>
                               ( ........................ )
                             </div>
                             <div>
-                              Driver / Ekspedisi,
-                              <div className="h-5"></div>
-                              ( ........................ )
+                              {documentType === 'delivery_order'
+                                ? (deliveryOrder?.warehouse_officer_name ? 'Bagian Gudang,' : 'Driver / Ekspedisi,')
+                                : 'Bagian Gudang,'}
+                              <div className="h-5 flex items-center justify-center">
+                                {warehouseSignature && (
+                                  <img
+                                    src={warehouseSignature}
+                                    alt="TTD Gudang"
+                                    className="max-h-5 max-w-20 object-contain select-none pointer-events-none"
+                                  />
+                                )}
+                              </div>
+                              <div className="truncate px-0.5 font-medium">
+                                ( {warehouseOfficerName?.slice(0, 20) || '........................'} )
+                              </div>
                             </div>
                             <div>
                               Hormat Kami,
-                              <div className="h-5"></div>
-                              ( {company.company_name.slice(0, 18)} )
+                              <div className="h-5 flex items-center justify-center">
+                                {issuerSignature && (
+                                  <img
+                                    src={issuerSignature}
+                                    alt="TTD Hormat Kami"
+                                    className="max-h-5 max-w-20 object-contain select-none pointer-events-none"
+                                  />
+                                )}
+                              </div>
+                              <div className="truncate px-0.5 font-medium">
+                                ( {issuerName.slice(0, 20)} )
+                              </div>
                             </div>
                           </div>
 
